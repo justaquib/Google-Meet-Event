@@ -40,10 +40,10 @@ app.get('/google', (req, res) =>{
 
 app.get('/google/redirect',async (req, res) =>{
     const code      =   req.query.code;
-
+    // console.log(oauth2Client) // log and get refresh token on the first request
     // const {tokens} = await oauth2Client.getToken(code);
     oauth2Client.setCredentials({refresh_token:refresh_token});
-    // console.log(oauth2Client)
+    
     res.send("it's working");
 });
 

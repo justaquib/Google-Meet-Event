@@ -10,7 +10,8 @@ dotenv.config({});
 
 const app   = express();
 const PORT  = process.env.APP_PORT || 8000;
-const date  = new Date();
+const startTime = moment().set({"hour":15,"minute":30}).add(1,"days").utcOffset("+05:30").format()
+const endTime   = moment().set({"hour":16,"minute":30}).add(1,"days").utcOffset("+05:30").format()
 
 const calendar = google.calendar({
     version:"v3",
@@ -24,6 +25,9 @@ const oauth2Client = new google.auth.OAuth2(
     process.env.CLIENT_SECRET,
     process.env.REDIRECT_URL,
 )
+// oauth2Client.setCredentials(refresh_token);
+
+const access_token  = "Go Get Your's";
 
 const scopes = [
     'https://www.googleapis.com/auth/calendar',
@@ -40,11 +44,11 @@ app.get('/google', (req, res) =>{
 
 app.get('/google/redirect',async (req, res) =>{
     const code      =   req.query.code;
-    // console.log(oauth2Client) // log and get refresh token on the first request
-    // const {tokens} = await oauth2Client.getToken(code);
+    const {tokens}  =   await oauth2Client.getToken(code); 
     oauth2Client.setCredentials({refresh_token:refresh_token});
-    
-    res.send("it's working");
+    console.log(oauth2Client) // log and get refresh token on the first request
+    // res.redirect('/schedule_event');
+    res.send("It's working");
 });
 
 app.get('/schedule_event',async(req, res) => {
@@ -53,15 +57,16 @@ app.get('/schedule_event',async(req, res) => {
         calendarId:"primary",
         auth: oauth2Client,
         conferenceDataVersion:1,
+        sendUpdates: "all",
         requestBody :{
-            summary:   "Calendar Event Created With API",
-            description: "Test event show that we have successfully created a calendar event using out API",
+            summary:   "Collegify Tech Team Meeting",
+            description: "Test event show that we have successfully created a calendar event using our API",
             start:{
-                dateTime: new Date("2023-06-06"),
+                dateTime: startTime,
                 timeZone: "Asia/Kolkata"
             },
             end:{
-                dateTime: new Date("2023-06-07"),
+                dateTime: endTime,
                 timeZone:"Asia/Kolkata"
             },
             conferenceData:{
@@ -69,23 +74,39 @@ app.get('/schedule_event',async(req, res) => {
                     requestId: uuid(),
                 }
             },
-            attendees:[
+            organizer:[
                 {
-                    email: "yourmailid@gmail.com",
-                    email: "someone_else_mail_id@gmail.com"
+                    email: "aquib@collegify.com",
                 },
             ],
+            attendees:[
+                {
+                    email: "supriyo@collegify.com",
+                },
+                {
+                    email: "chandan@collegify.com",
+                },
+            ],
+            reminders: {
+                'useDefault': false,
+                'overrides': [
+                  {'method': 'email', 'minutes': 24 * 60},
+                  {'method': 'popup', 'minutes': 10}
+                ]
+              }
         },
 
     })
     // oauth2Client.getTokenInfo().then(info => info.email)
 
     res.send({
-        msg:"You have successfully logged in"
+        msg:"You have successfully logged in",
+        event: "Google Meet event has been succefully created"
     })
 })
 
 app.listen(PORT,() => {
     console.log("Server listening on port " + PORT);
-    // console.log(moment(date).format("YYYY-MM-DD"))
+    // console.log(oauth2Client)
+    // console.log(refresh_token)
 })
